@@ -1,6 +1,10 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Not } from 'typeorm';
 import { Pasaje } from './entities/pasaje.entity';
 import { Viaje } from 'src/viajes/entities/viaje.entity';
 
@@ -14,97 +18,109 @@ export class PasajesService {
     private readonly viajeRepository: Repository<Viaje>,
   ) {}
 
+  // 🎟️ Crear un nuevo pasaje
   async crearPasaje(data: {
     viajeId: number;
     nroAsiento: number;
+    nombrePasajero?: string;
+    dniPasajero?: string;
     estado?: string;
   }): Promise<Pasaje> {
+    const { viajeId, nroAsiento, nombrePasajero, dniPasajero, estado } = data;
 
-    console.log('🟢 Datos recibidos:', data); // LOG 1
-
-    const { viajeId, nroAsiento, estado } = data;
-
+    // 🚌 Buscar viaje y validar existencia
     const viaje = await this.viajeRepository.findOne({
       where: { idViaje: viajeId },
       relations: ['colectivo', 'pasajes'],
     });
+    if (!viaje) throw new NotFoundException('El viaje no existe.');
 
-    console.log('🚌 Viaje encontrado:', viaje); // LOG 2
-
-    if (!viaje) {
-      throw new NotFoundException('El viaje no existe');
-    }
-
-    // Verificar capacidad del colectivo
+    // 🚫 Validar capacidad del colectivo
     const capacidad = viaje.colectivo.capacidad;
     const cantidadVendida = await this.pasajeRepository.count({
-      where: { viaje: { idViaje: viajeId }, estado: 'pagado' },
+      where: {
+        viaje: { idViaje: viajeId },
+        estado: Not('cancelado'),
+      },
     });
-
-    console.log(`🎟️ Cantidad vendida: ${cantidadVendida}/${capacidad}`); // LOG 3
-
     if (cantidadVendida >= capacidad) {
       throw new BadRequestException(
         'No se pueden vender más pasajes: el colectivo está completo.',
       );
     }
 
-    // Verificar que el nroAsiento no esté ocupado
+    // 💺 Validar que el asiento no esté ocupado
     const asientoOcupado = await this.pasajeRepository.findOne({
       where: {
         viaje: { idViaje: viajeId },
         nroAsiento,
-        estado: 'pagado',
+        estado: Not('cancelado'),
       },
     });
-
-    console.log('💺 Asiento ocupado:', asientoOcupado); // LOG 4
-
     if (asientoOcupado) {
       throw new BadRequestException(
         `El asiento ${nroAsiento} ya está ocupado.`,
       );
     }
 
-    // Crear el pasaje
+    // 👤 Validar datos del pasajero
+    if (!nombrePasajero || !dniPasajero) {
+      throw new BadRequestException(
+        'Debe especificar nombre y DNI del pasajero.',
+      );
+    }
+
+    // 💾 Crear y guardar pasaje
     const nuevoPasaje = this.pasajeRepository.create({
       viaje,
       nroAsiento,
+      nombrePasajero,
+      dniPasajero,
       estado: estado || 'reservado',
     });
 
-    console.log('💾 Guardando pasaje:', nuevoPasaje); // LOG 5
-
     const guardado = await this.pasajeRepository.save(nuevoPasaje);
-
-    console.log('✅ Pasaje guardado correctamente:', guardado); // LOG 6
+    console.log('✅ Pasaje guardado:', guardado);
 
     return guardado;
   }
 
-  async obtenerTodos(): Promise<Pasaje[]> {
-    return this.pasajeRepository.find({ relations: ['viaje'] });
+  // 📋 Obtener todos los pasajes (opcional: filtro por viaje)
+  async obtenerTodos(viajeId?: number): Promise<Pasaje[]> {
+    if (viajeId) {
+      return this.pasajeRepository.find({
+        where: { viaje: { idViaje: viajeId } },
+        relations: ['viaje', 'viaje.colectivo', 'viaje.origen', 'viaje.destino'],
+      });
+    }
+
+    return this.pasajeRepository.find({
+      relations: ['viaje', 'viaje.colectivo', 'viaje.origen', 'viaje.destino'],
+    });
   }
 
+  // 🗑️ Eliminar un pasaje
   async eliminarPasaje(id: number): Promise<void> {
     const result = await this.pasajeRepository.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException('Pasaje no encontrado');
-    }
+    if (result.affected === 0)
+      throw new NotFoundException('Pasaje no encontrado.');
   }
 
+  // 🔁 Actualizar el estado de un pasaje
   async actualizarEstado(id: number, nuevoEstado: string): Promise<Pasaje> {
     const pasaje = await this.pasajeRepository.findOne({
-      where: { id },
+      where: { idPasaje: id },
       relations: ['viaje', 'viaje.colectivo'],
     });
 
-    if (!pasaje) {
-      throw new NotFoundException('Pasaje no encontrado');
-    }
+    if (!pasaje) throw new NotFoundException('Pasaje no encontrado.');
 
-    if (nuevoEstado === 'cancelado' && pasaje.estado === 'pagado') {
-      // aquí podrías manejar reembolsos u otra lógica
+    // ⚙️ Validar transición de estados
+    const estadosValidos = ['reservado', 'pagado', 'cancelado'];
+    if (!estadosValidos.includes(nuevoEstado)) {
+      throw new BadRequestException(
+        'El estado debe ser "reservado", "pagado" o "cancelado".',
+      );
     }
 
     pasaje.estado = nuevoEstado;

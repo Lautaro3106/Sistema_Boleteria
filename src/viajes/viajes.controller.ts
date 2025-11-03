@@ -9,6 +9,7 @@ import {
   ParseIntPipe,
   Query,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { ViajesService } from './viajes.service';
 import { CreateViajeDto } from './dto/create-viaje.dto';
@@ -21,30 +22,31 @@ export class ViajesController {
 
   // 📥 Crear un nuevo viaje
   @Post()
-  create(@Body() createViajeDto: CreateViajeDto): Promise<Viaje> {
+  async create(@Body() createViajeDto: CreateViajeDto): Promise<Viaje> {
     return this.viajesService.create(createViajeDto);
   }
 
   // 📤 Obtener todos los viajes
   @Get()
-  findAll(): Promise<Viaje[]> {
+  async findAll(): Promise<Viaje[]> {
     return this.viajesService.findAll();
   }
 
   // 🔍 Obtener un viaje por su ID
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number): Promise<Viaje> {
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<Viaje> {
     return this.viajesService.findOne(id);
   }
 
-  // 🔍 Buscar viajes por origen y destino
+  // 🔍 Buscar viajes por origen y destino (usando IDs numéricos)
   @Get('origen/:idOrigen/destino/:idDestino')
   async findByOrigenDestino(
     @Param('idOrigen', ParseIntPipe) idOrigen: number,
     @Param('idDestino', ParseIntPipe) idDestino: number,
   ) {
     const viajes = await this.viajesService.findByOrigenDestino(idOrigen, idDestino);
-    if (!viajes.length) throw new NotFoundException('No hay viajes entre esos destinos.');
+    if (!viajes.length)
+      throw new NotFoundException('No hay viajes entre esos destinos.');
     return viajes;
   }
 
@@ -52,45 +54,53 @@ export class ViajesController {
   @Get('fecha/:fecha')
   async findByFecha(@Param('fecha') fecha: string) {
     const viajes = await this.viajesService.findByFecha(fecha);
-    if (!viajes.length) throw new NotFoundException('No hay viajes en esa fecha.');
+    if (!viajes.length)
+      throw new NotFoundException('No hay viajes programados para esa fecha.');
     return viajes;
   }
 
-  // 🔎 Buscar por origen, destino y fecha usando query params
+  // 🔎 Buscar viajes por origen, destino y fecha (versión final)
   // Ejemplo: GET /viajes/buscar?origen=1&destino=2&fecha=2025-11-10
- @Get('buscar')
-async buscarViajes(
-  @Query('origen') origen: string,
-  @Query('destino') destino: string,
-  @Query('fecha') fecha: string,
-) {
-  console.log('🟢 Parámetros recibidos:', { origen, destino, fecha });
+  @Get('buscar')
+  async buscarViajes(
+    @Query('origen') origen: string,
+    @Query('destino') destino: string,
+    @Query('fecha') fecha: string,
+  ) {
+    console.log('🟢 Parámetros recibidos:', { origen, destino, fecha });
 
-  if (!origen || !destino || !fecha) {
-    throw new NotFoundException('Debe especificar origen, destino y fecha en la búsqueda.');
+    if (!origen || !destino || !fecha) {
+      throw new BadRequestException(
+        'Debe especificar origen, destino y fecha en la búsqueda.',
+      );
+    }
+
+    const origenNum = parseInt(origen, 10);
+    const destinoNum = parseInt(destino, 10);
+    if (isNaN(origenNum) || isNaN(destinoNum)) {
+      throw new BadRequestException(
+        'Origen y destino deben ser valores numéricos válidos.',
+      );
+    }
+
+    const viajes = await this.viajesService.buscarViajes(
+      origenNum,
+      destinoNum,
+      fecha,
+    );
+
+    if (!viajes.length) {
+      throw new NotFoundException(
+        'No hay viajes disponibles para esa ruta y fecha.',
+      );
+    }
+
+    return viajes;
   }
-
-  const origenNum = parseInt(origen, 10);
-  const destinoNum = parseInt(destino, 10);
-
-  if (isNaN(origenNum) || isNaN(destinoNum)) {
-    throw new NotFoundException('Origen y destino deben ser valores numéricos válidos.');
-  }
-
-  const viajes = await this.viajesService.buscarViajes(origenNum, destinoNum, fecha);
-
-  if (!viajes.length) {
-    throw new NotFoundException('No hay viajes disponibles para esa ruta y fecha.');
-  }
-
-  return viajes;
-}
-
-
 
   // 🔧 Actualizar un viaje existente
   @Patch(':id')
-  update(
+  async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateViajeDto: UpdateViajeDto,
   ): Promise<Viaje> {
@@ -99,7 +109,7 @@ async buscarViajes(
 
   // 🗑️ Eliminar un viaje
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
+  async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.viajesService.remove(id);
   }
 }

@@ -1,6 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import { Viaje } from './entities/viaje.entity';
 import { CreateViajeDto } from './dto/create-viaje.dto';
 import { UpdateViajeDto } from './dto/update-viaje.dto';
@@ -31,20 +35,38 @@ export class ViajesService {
       precio,
     } = createViajeDto;
 
-    const colectivo = await this.colectivoRepository.findOne({ where: { id: idColectivo } });
-    if (!colectivo) throw new NotFoundException('El colectivo no existe');
+    // 🔎 Buscar colectivo
+    const colectivo = await this.colectivoRepository.findOne({
+      where: { idColectivo: idColectivo },
+    });
+    if (!colectivo) throw new NotFoundException('El colectivo no existe.');
 
-    const origen = await this.destinoRepository.findOne({ where: { id: idDestinoOrigen } });
-    const destino = await this.destinoRepository.findOne({ where: { id: idDestinoDestino } });
+    // 🔎 Buscar destinos
+    const origen = await this.destinoRepository.findOne({
+      where: { idDestino: idDestinoOrigen },
+    });
+    const destino = await this.destinoRepository.findOne({
+      where: { idDestino: idDestinoDestino },
+    });
+    if (!origen || !destino)
+      throw new NotFoundException('El origen o destino no existe.');
 
-    if (!origen || !destino) throw new NotFoundException('El destino no existe');
+    // ⏰ Validar fechas
+    const salida = new Date(fechaHoraSalida);
+    const llegada = new Date(fechaHoraLlegada);
+    if (salida >= llegada) {
+      throw new BadRequestException(
+        'La fecha de llegada debe ser posterior a la de salida.',
+      );
+    }
 
+    // 🆕 Crear nuevo viaje
     const nuevoViaje = this.viajeRepository.create({
       colectivo,
       origen,
       destino,
-      fechaHoraSalida,
-      fechaHoraLlegada,
+      fechaHoraSalida: salida,
+      fechaHoraLlegada: llegada,
       precio,
     });
 
@@ -55,48 +77,62 @@ export class ViajesService {
   async findAll(): Promise<Viaje[]> {
     return this.viajeRepository.find({
       relations: ['colectivo', 'origen', 'destino', 'pasajes'],
+      order: { fechaHoraSalida: 'ASC' },
     });
   }
 
   // 🔍 Buscar viajes por origen y destino
-async findByOrigenDestino(idOrigen: number, idDestino: number): Promise<Viaje[]> {
-  return this.viajeRepository.find({
-    where: {
-      origen: { id: idOrigen },
-      destino: { id: idDestino },
-    },
-    relations: ['colectivo', 'origen', 'destino', 'pasajes'],
-  });
-}
+  async findByOrigenDestino(
+    idOrigen: number,
+    idDestino: number,
+  ): Promise<Viaje[]> {
+    return this.viajeRepository.find({
+      where: {
+        origen: { idDestino: idOrigen },
+        destino: { idDestino: idDestino },
+      },
+      relations: ['colectivo', 'origen', 'destino', 'pasajes'],
+      order: { fechaHoraSalida: 'ASC' },
+    });
+  }
 
-// 📅 Buscar viajes por fecha de salida
-async findByFecha(fecha: string): Promise<Viaje[]> {
-  const fechaBusqueda = new Date(fecha);
-  return this.viajeRepository
-    .createQueryBuilder('viaje')
-    .leftJoinAndSelect('viaje.colectivo', 'colectivo')
-    .leftJoinAndSelect('viaje.origen', 'origen')
-    .leftJoinAndSelect('viaje.destino', 'destino')
-    .leftJoinAndSelect('viaje.pasajes', 'pasajes')
-    .where('DATE(viaje.fechaHoraSalida) = DATE(:fecha)', { fecha: fechaBusqueda })
-    .getMany();
-}
+  // 📅 Buscar viajes por fecha
+  async findByFecha(fecha: string): Promise<Viaje[]> {
+    const date = new Date(fecha);
+    const start = new Date(date);
+    const end = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
 
-// 🔎 Buscar viajes por origen, destino y fecha (combinado)
-async buscarViajes(origenId: number, destinoId: number, fecha: string): Promise<Viaje[]> {
-  const fechaBusqueda = new Date(fecha);
-  return this.viajeRepository
-    .createQueryBuilder('viaje')
-    .leftJoinAndSelect('viaje.colectivo', 'colectivo')
-    .leftJoinAndSelect('viaje.origen', 'origen')
-    .leftJoinAndSelect('viaje.destino', 'destino')
-    .leftJoinAndSelect('viaje.pasajes', 'pasajes')
-    .where('origen.id = :origenId', { origenId })
-    .andWhere('destino.id = :destinoId', { destinoId })
-    .andWhere('DATE(viaje.fechaHoraSalida) = DATE(:fecha)', { fecha: fechaBusqueda })
-    .getMany();
-}
+    return this.viajeRepository.find({
+      where: { fechaHoraSalida: Between(start, end) },
+      relations: ['colectivo', 'origen', 'destino', 'pasajes'],
+      order: { fechaHoraSalida: 'ASC' },
+    });
+  }
 
+  // 🔎 Buscar viajes por origen, destino y fecha combinados
+  async buscarViajes(
+    origenId: number,
+    destinoId: number,
+    fecha: string,
+  ): Promise<Viaje[]> {
+    const date = new Date(fecha);
+    const start = new Date(date);
+    const end = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+
+    return this.viajeRepository.find({
+      where: {
+        origen: { idDestino: origenId },
+        destino: { idDestino: destinoId },
+        fechaHoraSalida: Between(start, end),
+      },
+      relations: ['colectivo', 'origen', 'destino', 'pasajes'],
+      order: { fechaHoraSalida: 'ASC' },
+    });
+  }
 
   // 🔍 Obtener un viaje por ID
   async findOne(id: number): Promise<Viaje> {
@@ -105,20 +141,30 @@ async buscarViajes(origenId: number, destinoId: number, fecha: string): Promise<
       relations: ['colectivo', 'origen', 'destino', 'pasajes'],
     });
 
-    if (!viaje) throw new NotFoundException('Viaje no encontrado');
+    if (!viaje) throw new NotFoundException('Viaje no encontrado.');
     return viaje;
   }
 
-  // 🔧 Actualizar viaje
+  // 🔧 Actualizar un viaje existente
   async update(id: number, updateViajeDto: UpdateViajeDto): Promise<Viaje> {
     const viaje = await this.findOne(id);
+
     Object.assign(viaje, updateViajeDto);
+
+    // ⚠️ Validar nuevamente si cambia fechas
+    if (viaje.fechaHoraSalida >= viaje.fechaHoraLlegada) {
+      throw new BadRequestException(
+        'La fecha de llegada debe ser posterior a la salida.',
+      );
+    }
+
     return this.viajeRepository.save(viaje);
   }
 
-  // 🗑️ Eliminar viaje
+  // 🗑️ Eliminar un viaje
   async remove(id: number): Promise<void> {
     const result = await this.viajeRepository.delete(id);
-    if (result.affected === 0) throw new NotFoundException('Viaje no encontrado');
+    if (result.affected === 0)
+      throw new NotFoundException('Viaje no encontrado.');
   }
 }
