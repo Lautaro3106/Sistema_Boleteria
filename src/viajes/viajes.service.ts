@@ -37,16 +37,16 @@ export class ViajesService {
 
     // 🔎 Buscar colectivo
     const colectivo = await this.colectivoRepository.findOne({
-      where: { idColectivo: idColectivo },
+      where: { id: idColectivo },
     });
     if (!colectivo) throw new NotFoundException('El colectivo no existe.');
 
     // 🔎 Buscar destinos
     const origen = await this.destinoRepository.findOne({
-      where: { idDestino: idDestinoOrigen },
+      where: { id: idDestinoOrigen },
     });
     const destino = await this.destinoRepository.findOne({
-      where: { idDestino: idDestinoDestino },
+      where: { id: idDestinoDestino },
     });
     if (!origen || !destino)
       throw new NotFoundException('El origen o destino no existe.');
@@ -88,8 +88,8 @@ export class ViajesService {
   ): Promise<Viaje[]> {
     return this.viajeRepository.find({
       where: {
-        origen: { idDestino: idOrigen },
-        destino: { idDestino: idDestino },
+        origen: { id: idOrigen },
+        destino: { id: idDestino },
       },
       relations: ['colectivo', 'origen', 'destino', 'pasajes'],
       order: { fechaHoraSalida: 'ASC' },
@@ -125,8 +125,8 @@ export class ViajesService {
 
     return this.viajeRepository.find({
       where: {
-        origen: { idDestino: origenId },
-        destino: { idDestino: destinoId },
+        origen: { id: origenId },
+        destino: { id: destinoId },
         fechaHoraSalida: Between(start, end),
       },
       relations: ['colectivo', 'origen', 'destino', 'pasajes'],

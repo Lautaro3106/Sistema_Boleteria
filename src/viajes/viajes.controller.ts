@@ -32,11 +32,7 @@ export class ViajesController {
     return this.viajesService.findAll();
   }
 
-  // 🔍 Obtener un viaje por su ID
-  @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number): Promise<Viaje> {
-    return this.viajesService.findOne(id);
-  }
+
 
   // 🔍 Buscar viajes por origen y destino (usando IDs numéricos)
   @Get('origen/:idOrigen/destino/:idDestino')
@@ -96,6 +92,12 @@ export class ViajesController {
     }
 
     return viajes;
+  }
+
+    // 🔍 Obtener un viaje por su ID
+  @Get(':id')
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<Viaje> {
+    return this.viajesService.findOne(id);
   }
 
   // 🔧 Actualizar un viaje existente

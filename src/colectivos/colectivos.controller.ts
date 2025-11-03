@@ -1,34 +1,42 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, ParseIntPipe, Patch } from '@nestjs/common';
 import { ColectivosService } from './colectivos.service';
-import { CreateColectivoDto } from './dto/create-colectivo.dto';
-import { UpdateColectivoDto } from './dto/update-colectivo.dto';
+import { Colectivo } from './entities/colectivo.entity';
 
 @Controller('colectivos')
 export class ColectivosController {
   constructor(private readonly colectivosService: ColectivosService) {}
 
+  // 📥 Crear un nuevo colectivo
   @Post()
-  create(@Body() createColectivoDto: CreateColectivoDto) {
-    return this.colectivosService.create(createColectivoDto);
+  async create(@Body() data: Partial<Colectivo>): Promise<Colectivo> {
+    return this.colectivosService.create(data);
   }
 
+  // 📋 Obtener todos los colectivos
   @Get()
-  findAll() {
+  async findAll(): Promise<Colectivo[]> {
     return this.colectivosService.findAll();
   }
 
+  // 🔍 Obtener un colectivo por ID
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.colectivosService.findOne(+id);
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<Colectivo> {
+    return this.colectivosService.findOne(id);
   }
 
+  // 🔧 Actualizar un colectivo
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateColectivoDto: UpdateColectivoDto) {
-    return this.colectivosService.update(+id, updateColectivoDto);
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() data: Partial<Colectivo>,
+  ): Promise<Colectivo> {
+    return this.colectivosService.update(id, data);
   }
 
+  // 🗑️ Eliminar un colectivo
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.colectivosService.remove(+id);
+  async remove(@Param('id', ParseIntPipe) id: number): Promise<{ mensaje: string }> {
+    await this.colectivosService.remove(id);
+    return { mensaje: 'Colectivo eliminado correctamente' };
   }
 }

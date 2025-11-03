@@ -1,34 +1,42 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, ParseIntPipe, Patch } from '@nestjs/common';
 import { DestinosService } from './destinos.service';
-import { CreateDestinoDto } from './dto/create-destino.dto';
-import { UpdateDestinoDto } from './dto/update-destino.dto';
+import { Destino } from './entities/destino.entity';
 
 @Controller('destinos')
 export class DestinosController {
   constructor(private readonly destinosService: DestinosService) {}
 
+  // 📥 Crear un nuevo destino
   @Post()
-  create(@Body() createDestinoDto: CreateDestinoDto) {
-    return this.destinosService.create(createDestinoDto);
+  async create(@Body() data: Partial<Destino>): Promise<Destino> {
+    return this.destinosService.create(data);
   }
 
+  // 📋 Obtener todos los destinos
   @Get()
-  findAll() {
+  async findAll(): Promise<Destino[]> {
     return this.destinosService.findAll();
   }
 
+  // 🔍 Obtener un destino por ID
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.destinosService.findOne(+id);
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<Destino> {
+    return this.destinosService.findOne(id);
   }
 
+  // 🔧 Actualizar un destino
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateDestinoDto: UpdateDestinoDto) {
-    return this.destinosService.update(+id, updateDestinoDto);
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() data: Partial<Destino>,
+  ): Promise<Destino> {
+    return this.destinosService.update(id, data);
   }
 
+  // 🗑️ Eliminar un destino
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.destinosService.remove(+id);
+  async remove(@Param('id', ParseIntPipe) id: number): Promise<{ mensaje: string }> {
+    await this.destinosService.remove(id);
+    return { mensaje: 'Destino eliminado correctamente' };
   }
 }

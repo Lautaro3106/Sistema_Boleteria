@@ -1,26 +1,43 @@
-import { Injectable } from '@nestjs/common';
-import { CreateColectivoDto } from './dto/create-colectivo.dto';
-import { UpdateColectivoDto } from './dto/update-colectivo.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Colectivo } from './entities/colectivo.entity';
 
 @Injectable()
 export class ColectivosService {
-  create(createColectivoDto: CreateColectivoDto) {
-    return 'This action adds a new colectivo';
+  constructor(
+    @InjectRepository(Colectivo)
+    private readonly colectivoRepository: Repository<Colectivo>,
+  ) {}
+
+  // 📥 Crear un nuevo colectivo
+  async create(data: Partial<Colectivo>): Promise<Colectivo> {
+    const nuevo = this.colectivoRepository.create(data);
+    return this.colectivoRepository.save(nuevo);
   }
 
-  findAll() {
-    return `This action returns all colectivos`;
+  // 📋 Obtener todos los colectivos
+  async findAll(): Promise<Colectivo[]> {
+    return this.colectivoRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} colectivo`;
+  // 🔍 Obtener un colectivo por ID
+  async findOne(id: number): Promise<Colectivo> {
+    const colectivo = await this.colectivoRepository.findOne({ where: { id } });
+    if (!colectivo) throw new NotFoundException('Colectivo no encontrado');
+    return colectivo;
   }
 
-  update(id: number, updateColectivoDto: UpdateColectivoDto) {
-    return `This action updates a #${id} colectivo`;
+  // 🔧 Actualizar un colectivo
+  async update(id: number, data: Partial<Colectivo>): Promise<Colectivo> {
+    const colectivo = await this.findOne(id);
+    Object.assign(colectivo, data);
+    return this.colectivoRepository.save(colectivo);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} colectivo`;
+  // 🗑️ Eliminar un colectivo
+  async remove(id: number): Promise<void> {
+    const result = await this.colectivoRepository.delete(id);
+    if (result.affected === 0) throw new NotFoundException('Colectivo no encontrado');
   }
 }
