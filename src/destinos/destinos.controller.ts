@@ -6,25 +6,25 @@ import { Destino } from './entities/destino.entity';
 export class DestinosController {
   constructor(private readonly destinosService: DestinosService) {}
 
-  // 📥 Crear un nuevo destino
+  //  Crear un nuevo destino
   @Post()
   async create(@Body() data: Partial<Destino>): Promise<Destino> {
     return this.destinosService.create(data);
   }
 
-  // 📋 Obtener todos los destinos
+  // Obtener todos los destinos
   @Get()
   async findAll(): Promise<Destino[]> {
     return this.destinosService.findAll();
   }
 
-  // 🔍 Obtener un destino por ID
+  //  Obtener un destino por ID
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<Destino> {
     return this.destinosService.findOne(id);
   }
 
-  // 🔧 Actualizar un destino
+  //  Actualizar un destino
   @Patch(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
@@ -33,7 +33,7 @@ export class DestinosController {
     return this.destinosService.update(id, data);
   }
 
-  // 🗑️ Eliminar un destino
+  //  Eliminar un destino
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number): Promise<{ mensaje: string }> {
     await this.destinosService.remove(id);

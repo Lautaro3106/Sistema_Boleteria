@@ -18,14 +18,14 @@ import { Pasaje } from './entities/pasaje.entity';
 export class PasajesController {
   constructor(private readonly pasajesService: PasajesService) {}
 
-  // 🎟️ Crear un nuevo pasaje (venta o reserva)
+  // Crear un nuevo pasaje (venta o reserva)
   @Post()
   async crearPasaje(@Body() dto: CreatePasajeDto): Promise<Pasaje> {
     console.log('📩 Body recibido en controller:', dto);
     return this.pasajesService.crearPasaje(dto);
   }
 
-  // 📋 Obtener todos los pasajes o filtrarlos por viaje
+  // Obtener todos los pasajes o filtrarlos por viaje
   // Ejemplo: GET /pasajes?viajeId=1
   @Get()
   async obtenerTodos(
@@ -38,7 +38,7 @@ export class PasajesController {
     return this.pasajesService.obtenerTodos();
   }
 
-  // 🗑️ Eliminar un pasaje por ID
+  // Eliminar un pasaje por ID
   @Delete(':id')
   async eliminar(
     @Param('id', ParseIntPipe) id: number,
@@ -47,7 +47,7 @@ export class PasajesController {
     return { mensaje: 'Pasaje eliminado correctamente.' };
   }
 
-  // 🔁 Actualizar el estado de un pasaje
+  // Actualizar el estado de un pasaje
   // Ejemplo: PUT /pasajes/10/estado  { "estado": "cancelado" }
   @Put(':id/estado')
   async actualizarEstado(

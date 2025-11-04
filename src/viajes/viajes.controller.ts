@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Put,
   ParseIntPipe,
   Query,
   NotFoundException,
@@ -20,21 +21,19 @@ import { Viaje } from './entities/viaje.entity';
 export class ViajesController {
   constructor(private readonly viajesService: ViajesService) {}
 
-  // 📥 Crear un nuevo viaje
+  //  Crear un nuevo viaje
   @Post()
   async create(@Body() createViajeDto: CreateViajeDto): Promise<Viaje> {
     return this.viajesService.create(createViajeDto);
   }
 
-  // 📤 Obtener todos los viajes
+  //  Obtener todos los viajes
   @Get()
   async findAll(): Promise<Viaje[]> {
     return this.viajesService.findAll();
   }
 
-
-
-  // 🔍 Buscar viajes por origen y destino (usando IDs numéricos)
+  //  Buscar viajes por origen y destino
   @Get('origen/:idOrigen/destino/:idDestino')
   async findByOrigenDestino(
     @Param('idOrigen', ParseIntPipe) idOrigen: number,
@@ -46,7 +45,7 @@ export class ViajesController {
     return viajes;
   }
 
-  // 📅 Buscar viajes por fecha
+  //  Buscar viajes por fecha
   @Get('fecha/:fecha')
   async findByFecha(@Param('fecha') fecha: string) {
     const viajes = await this.viajesService.findByFecha(fecha);
@@ -55,16 +54,13 @@ export class ViajesController {
     return viajes;
   }
 
-  // 🔎 Buscar viajes por origen, destino y fecha (versión final)
-  // Ejemplo: GET /viajes/buscar?origen=1&destino=2&fecha=2025-11-10
+  //  Buscar viajes por origen, destino y fecha
   @Get('buscar')
   async buscarViajes(
     @Query('origen') origen: string,
     @Query('destino') destino: string,
     @Query('fecha') fecha: string,
   ) {
-    console.log('🟢 Parámetros recibidos:', { origen, destino, fecha });
-
     if (!origen || !destino || !fecha) {
       throw new BadRequestException(
         'Debe especificar origen, destino y fecha en la búsqueda.',
@@ -94,25 +90,33 @@ export class ViajesController {
     return viajes;
   }
 
-    // 🔍 Obtener un viaje por su ID
+  //  Obtener un viaje por su ID
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<Viaje> {
     return this.viajesService.findOne(id);
   }
 
-  // 🔧 Actualizar un viaje existente
+  //  Actualizar un viaje existente (PATCH)
   @Patch(':id')
-  async update(
+  async updatePatch(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateViajeDto: UpdateViajeDto,
   ): Promise<Viaje> {
     return this.viajesService.update(id, updateViajeDto);
   }
 
-  // 🗑️ Eliminar un viaje
+  //  Actualizar un viaje existente (PUT - para compatibilidad con frontend)
+  @Put(':id')
+  async updatePut(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateViajeDto: UpdateViajeDto,
+  ): Promise<Viaje> {
+    return this.viajesService.update(id, updateViajeDto);
+  }
+
+  //  Eliminar un viaje
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.viajesService.remove(id);
   }
 }
-

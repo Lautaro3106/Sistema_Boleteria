@@ -16,7 +16,7 @@ import { DestinosModule } from './destinos/destinos.module';
       username: process.env.DB_USER || 'root',
       password: process.env.DB_PASS || 'tiziano06',
       database: process.env.DB_NAME || 'boleteria_db',
-      synchronize: true, // ⚠️ solo en desarrollo
+      synchronize: true, 
       autoLoadEntities: true,
       retryAttempts: 5,
       retryDelay: 3000,

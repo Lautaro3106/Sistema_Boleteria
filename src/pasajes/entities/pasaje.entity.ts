@@ -4,7 +4,7 @@ import { Viaje } from 'src/viajes/entities/viaje.entity';
 @Entity()
 export class Pasaje {
   @PrimaryGeneratedColumn()
-  idPasaje: number; // ✅ mejor usar un nombre más explícito
+  idPasaje: number; 
 
   @ManyToOne(() => Viaje, (viaje) => viaje.pasajes, { eager: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'idViaje' }) // clave foránea
@@ -14,10 +14,10 @@ export class Pasaje {
   nroAsiento: number;
 
   @Column({ length: 100 })
-  nombrePasajero: string; // ✅ agregado
+  nombrePasajero: string; 
 
   @Column({ length: 20 })
-  dniPasajero: string; // ✅ agregado
+  dniPasajero: string; 
 
   @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
   fechaCompra: Date;

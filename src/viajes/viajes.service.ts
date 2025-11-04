@@ -24,7 +24,7 @@ export class ViajesService {
     private readonly destinoRepository: Repository<Destino>,
   ) {}
 
-  // 📥 Crear un nuevo viaje
+  //  Crear un nuevo viaje
   async create(createViajeDto: CreateViajeDto): Promise<Viaje> {
     const {
       idColectivo,
@@ -35,13 +35,13 @@ export class ViajesService {
       precio,
     } = createViajeDto;
 
-    // 🔎 Buscar colectivo
+    //  Buscar colectivo
     const colectivo = await this.colectivoRepository.findOne({
       where: { id: idColectivo },
     });
     if (!colectivo) throw new NotFoundException('El colectivo no existe.');
 
-    // 🔎 Buscar destinos
+    //  Buscar destinos
     const origen = await this.destinoRepository.findOne({
       where: { id: idDestinoOrigen },
     });
@@ -51,7 +51,7 @@ export class ViajesService {
     if (!origen || !destino)
       throw new NotFoundException('El origen o destino no existe.');
 
-    // ⏰ Validar fechas
+    //  Validar fechas
     const salida = new Date(fechaHoraSalida);
     const llegada = new Date(fechaHoraLlegada);
     if (salida >= llegada) {
@@ -60,7 +60,7 @@ export class ViajesService {
       );
     }
 
-    // 🆕 Crear nuevo viaje
+    //  Crear nuevo viaje
     const nuevoViaje = this.viajeRepository.create({
       colectivo,
       origen,
@@ -73,7 +73,7 @@ export class ViajesService {
     return this.viajeRepository.save(nuevoViaje);
   }
 
-  // 📤 Obtener todos los viajes
+  //  Obtener todos los viajes
   async findAll(): Promise<Viaje[]> {
     return this.viajeRepository.find({
       relations: ['colectivo', 'origen', 'destino', 'pasajes'],
@@ -81,7 +81,7 @@ export class ViajesService {
     });
   }
 
-  // 🔍 Buscar viajes por origen y destino
+  //  Buscar viajes por origen y destino
   async findByOrigenDestino(
     idOrigen: number,
     idDestino: number,
@@ -96,7 +96,7 @@ export class ViajesService {
     });
   }
 
-  // 📅 Buscar viajes por fecha
+  //  Buscar viajes por fecha
   async findByFecha(fecha: string): Promise<Viaje[]> {
     const date = new Date(fecha);
     const start = new Date(date);
@@ -111,7 +111,7 @@ export class ViajesService {
     });
   }
 
-  // 🔎 Buscar viajes por origen, destino y fecha combinados
+  //  Buscar viajes por origen, destino y fecha combinados
   async buscarViajes(
     origenId: number,
     destinoId: number,
@@ -134,24 +134,26 @@ export class ViajesService {
     });
   }
 
-  // 🔍 Obtener un viaje por ID
+  //  Obtener un viaje por ID
   async findOne(id: number): Promise<Viaje> {
-    const viaje = await this.viajeRepository.findOne({
-      where: { idViaje: id },
-      relations: ['colectivo', 'origen', 'destino', 'pasajes'],
-    });
+  const viaje = await this.viajeRepository.findOne({
+    where: { idViaje: id }, 
+    relations: ['colectivo', 'origen', 'destino', 'pasajes'],
+  });
 
-    if (!viaje) throw new NotFoundException('Viaje no encontrado.');
-    return viaje;
-  }
+  if (!viaje) throw new NotFoundException('Viaje no encontrado.');
+  return viaje;
+}
 
-  // 🔧 Actualizar un viaje existente
+
+
+  //  Actualizar un viaje existente
   async update(id: number, updateViajeDto: UpdateViajeDto): Promise<Viaje> {
     const viaje = await this.findOne(id);
 
     Object.assign(viaje, updateViajeDto);
 
-    // ⚠️ Validar nuevamente si cambia fechas
+    
     if (viaje.fechaHoraSalida >= viaje.fechaHoraLlegada) {
       throw new BadRequestException(
         'La fecha de llegada debe ser posterior a la salida.',
@@ -161,7 +163,7 @@ export class ViajesService {
     return this.viajeRepository.save(viaje);
   }
 
-  // 🗑️ Eliminar un viaje
+  //  Eliminar un viaje
   async remove(id: number): Promise<void> {
     const result = await this.viajeRepository.delete(id);
     if (result.affected === 0)

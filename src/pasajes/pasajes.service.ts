@@ -18,7 +18,7 @@ export class PasajesService {
     private readonly viajeRepository: Repository<Viaje>,
   ) {}
 
-  // 🎟️ Crear un nuevo pasaje
+  //  Crear un nuevo pasaje
   async crearPasaje(data: {
     viajeId: number;
     nroAsiento: number;
@@ -28,14 +28,14 @@ export class PasajesService {
   }): Promise<Pasaje> {
     const { viajeId, nroAsiento, nombrePasajero, dniPasajero, estado } = data;
 
-    // 🚌 Buscar viaje y validar existencia
+    //  Buscar viaje y validar existencia
     const viaje = await this.viajeRepository.findOne({
       where: { idViaje: viajeId },
       relations: ['colectivo', 'pasajes'],
     });
     if (!viaje) throw new NotFoundException('El viaje no existe.');
 
-    // 🚫 Validar capacidad del colectivo
+    //  Validar capacidad del colectivo
     const capacidad = viaje.colectivo.capacidad;
     const cantidadVendida = await this.pasajeRepository.count({
       where: {
@@ -49,7 +49,7 @@ export class PasajesService {
       );
     }
 
-    // 💺 Validar que el asiento no esté ocupado
+    //  Validar que el asiento no esté ocupado
     const asientoOcupado = await this.pasajeRepository.findOne({
       where: {
         viaje: { idViaje: viajeId },
@@ -63,14 +63,14 @@ export class PasajesService {
       );
     }
 
-    // 👤 Validar datos del pasajero
+    //  Validar datos del pasajero
     if (!nombrePasajero || !dniPasajero) {
       throw new BadRequestException(
         'Debe especificar nombre y DNI del pasajero.',
       );
     }
 
-    // 💾 Crear y guardar pasaje
+    //  Crear y guardar pasaje
     const nuevoPasaje = this.pasajeRepository.create({
       viaje,
       nroAsiento,
@@ -85,7 +85,7 @@ export class PasajesService {
     return guardado;
   }
 
-  // 📋 Obtener todos los pasajes (opcional: filtro por viaje)
+  //  Obtener todos los pasajes (opcional: filtro por viaje)
   async obtenerTodos(viajeId?: number): Promise<Pasaje[]> {
     if (viajeId) {
       return this.pasajeRepository.find({
@@ -99,14 +99,14 @@ export class PasajesService {
     });
   }
 
-  // 🗑️ Eliminar un pasaje
+  //  Eliminar un pasaje
   async eliminarPasaje(id: number): Promise<void> {
     const result = await this.pasajeRepository.delete(id);
     if (result.affected === 0)
       throw new NotFoundException('Pasaje no encontrado.');
   }
 
-  // 🔁 Actualizar el estado de un pasaje
+  //  Actualizar el estado de un pasaje
   async actualizarEstado(id: number, nuevoEstado: string): Promise<Pasaje> {
     const pasaje = await this.pasajeRepository.findOne({
       where: { idPasaje: id },
@@ -115,7 +115,7 @@ export class PasajesService {
 
     if (!pasaje) throw new NotFoundException('Pasaje no encontrado.');
 
-    // ⚙️ Validar transición de estados
+    //  Validar transición de estados
     const estadosValidos = ['reservado', 'pagado', 'cancelado'];
     if (!estadosValidos.includes(nuevoEstado)) {
       throw new BadRequestException(

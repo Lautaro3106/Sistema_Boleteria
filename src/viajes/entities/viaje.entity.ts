@@ -15,33 +15,27 @@ export class Viaje {
   @PrimaryGeneratedColumn()
   idViaje: number;
 
-  // 🔗 Relación con Colectivo
   @ManyToOne(() => Colectivo, (colectivo) => colectivo.viajes, { eager: true })
   @JoinColumn({ name: 'idColectivo' })
   colectivo: Colectivo;
 
-  // 🔗 Relación con el destino de origen
   @ManyToOne(() => Destino, { eager: true })
   @JoinColumn({ name: 'idDestinoOrigen' })
   origen: Destino;
 
-  // 🔗 Relación con el destino de llegada
   @ManyToOne(() => Destino, { eager: true })
   @JoinColumn({ name: 'idDestinoDestino' })
   destino: Destino;
 
-  // 📅 Fechas del viaje
-  @Column({ type: 'datetime', nullable: false })
+  @Column({ type: 'datetime' })
   fechaHoraSalida: Date;
 
-  @Column({ type: 'datetime', nullable: false })
+  @Column({ type: 'datetime' })
   fechaHoraLlegada: Date;
 
-  // 💰 Precio del pasaje
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: false })
+  @Column('decimal', { precision: 10, scale: 2 })
   precio: number;
 
-  // 🎟️ Relación con pasajes
-  @OneToMany(() => Pasaje, (pasaje) => pasaje.viaje, { cascade: true })
+  @OneToMany(() => Pasaje, (pasaje) => pasaje.viaje)
   pasajes: Pasaje[];
 }

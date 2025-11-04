@@ -10,6 +10,6 @@ import { Destino } from '../destinos/entities/destino.entity';
   imports: [TypeOrmModule.forFeature([Viaje, Colectivo, Destino])],
   controllers: [ViajesController],
   providers: [ViajesService],
-  exports: [TypeOrmModule], // 👈 por si otro módulo necesita Viaje más adelante
+  exports: [TypeOrmModule], 
 })
 export class ViajesModule {}

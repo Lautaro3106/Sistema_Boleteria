@@ -10,32 +10,32 @@ export class ColectivosService {
     private readonly colectivoRepository: Repository<Colectivo>,
   ) {}
 
-  // 📥 Crear un nuevo colectivo
+  //  Crear un nuevo colectivo
   async create(data: Partial<Colectivo>): Promise<Colectivo> {
     const nuevo = this.colectivoRepository.create(data);
     return this.colectivoRepository.save(nuevo);
   }
 
-  // 📋 Obtener todos los colectivos
+  //  Obtener todos los colectivos
   async findAll(): Promise<Colectivo[]> {
     return this.colectivoRepository.find();
   }
 
-  // 🔍 Obtener un colectivo por ID
+  //  Obtener un colectivo por ID
   async findOne(id: number): Promise<Colectivo> {
     const colectivo = await this.colectivoRepository.findOne({ where: { id } });
     if (!colectivo) throw new NotFoundException('Colectivo no encontrado');
     return colectivo;
   }
 
-  // 🔧 Actualizar un colectivo
+  //  Actualizar un colectivo
   async update(id: number, data: Partial<Colectivo>): Promise<Colectivo> {
     const colectivo = await this.findOne(id);
     Object.assign(colectivo, data);
     return this.colectivoRepository.save(colectivo);
   }
 
-  // 🗑️ Eliminar un colectivo
+  //  Eliminar un colectivo
   async remove(id: number): Promise<void> {
     const result = await this.colectivoRepository.delete(id);
     if (result.affected === 0) throw new NotFoundException('Colectivo no encontrado');

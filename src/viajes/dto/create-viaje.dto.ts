@@ -1,22 +1,27 @@
-import { IsInt, IsNumber, IsDateString, IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsDateString } from 'class-validator';
 
 export class CreateViajeDto {
-  @IsInt()
+  @IsNotEmpty()
+  @IsNumber()
   idColectivo: number;
 
-  @IsInt()
+  @IsNotEmpty()
+  @IsNumber()
   idDestinoOrigen: number;
 
-  @IsInt()
+  @IsNotEmpty()
+  @IsNumber()
   idDestinoDestino: number;
 
+  @IsNotEmpty()
   @IsDateString()
   fechaHoraSalida: string;
 
+  @IsNotEmpty()
   @IsDateString()
   fechaHoraLlegada: string;
 
-  @IsNumber()
   @IsNotEmpty()
+  @IsNumber()
   precio: number;
 }

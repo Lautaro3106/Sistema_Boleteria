@@ -5,7 +5,7 @@ import { ColectivosController } from './colectivos.controller';
 import { Colectivo } from './entities/colectivo.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Colectivo])], // 👈 ESTA LÍNEA ES CLAVE
+  imports: [TypeOrmModule.forFeature([Colectivo])], // ESTA LÍNEA ES CLAVE
   controllers: [ColectivosController],
   providers: [ColectivosService],
   exports: [ColectivosService],
